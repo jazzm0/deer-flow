@@ -297,12 +297,6 @@ def markdown_to_pdf_tool(
             update={"messages": [ToolMessage("Error: Thread paths not available", tool_call_id=tool_call_id)]}
         )
 
-    sandbox = runtime.state.get("sandbox")
-    if not sandbox:
-        return Command(
-            update={"messages": [ToolMessage("Error: Sandbox not available", tool_call_id=tool_call_id)]}
-        )
-
     # Resolve input markdown file path
     md_path_str = markdown_file.lstrip("/")
     if md_path_str.startswith("mnt/user-data/workspace/"):
