@@ -32,6 +32,9 @@ COPY backend ./backend
 RUN --mount=type=cache,target=/root/.cache/uv \
     sh -c "cd backend && uv sync"
 
+# Install Playwright browsers (Chromium for PDF generation)
+RUN sh -c "cd backend && uv run playwright install --with-deps chromium"
+
 # Expose ports (gateway: 8001, langgraph: 2024)
 EXPOSE 8001 2024
 
