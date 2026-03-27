@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
-import dynamic from "next/dynamic";
+import { useCallback, useEffect, useState } from "react";
 
 import { type PromptInputMessage } from "@/components/ai-elements/prompt-input";
 import { ArtifactTrigger } from "@/components/workspace/artifacts";
@@ -26,7 +25,7 @@ import { textOfMessage } from "@/core/threads/utils";
 import { env } from "@/env";
 import { cn } from "@/lib/utils";
 
-function ChatPage() {
+export default function ChatPage() {
   const { t } = useI18n();
   const [settings, setSettings] = useLocalSettings();
 
@@ -71,6 +70,16 @@ function ChatPage() {
   const handleStop = useCallback(async () => {
     await thread.stop();
   }, [thread]);
+
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <ThreadContext.Provider value={{ thread, isMock }}>
@@ -156,5 +165,3 @@ function ChatPage() {
     </ThreadContext.Provider>
   );
 }
-
-export default dynamic(() => Promise.resolve(ChatPage), { ssr: false });
