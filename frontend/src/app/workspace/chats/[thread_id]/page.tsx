@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+import dynamic from "next/dynamic";
 
 import { type PromptInputMessage } from "@/components/ai-elements/prompt-input";
 import { ArtifactTrigger } from "@/components/workspace/artifacts";
@@ -25,7 +26,7 @@ import { textOfMessage } from "@/core/threads/utils";
 import { env } from "@/env";
 import { cn } from "@/lib/utils";
 
-export default function ChatPage() {
+function ChatPage() {
   const { t } = useI18n();
   const [settings, setSettings] = useLocalSettings();
 
@@ -155,3 +156,5 @@ export default function ChatPage() {
     </ThreadContext.Provider>
   );
 }
+
+export default dynamic(() => Promise.resolve(ChatPage), { ssr: false });
