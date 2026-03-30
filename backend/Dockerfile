@@ -8,6 +8,7 @@ FROM python:3.12-slim-bookworm
 
 ARG NODE_MAJOR=22
 ARG APT_MIRROR
+ARG UV_INDEX_URL
 
 # Optionally override apt mirror for restricted networks (e.g. APT_MIRROR=mirrors.aliyun.com)
 RUN if [ -n "${APT_MIRROR}" ]; then \
@@ -42,7 +43,7 @@ COPY backend ./backend
 
 # Install dependencies with cache mount
 RUN --mount=type=cache,target=/root/.cache/uv \
-    sh -c "cd backend && uv sync"
+    sh -c "cd backend && UV_INDEX_URL=${UV_INDEX_URL:-https://pypi.org/simple} uv sync"
 
 # Install Playwright browsers (Chromium for PDF generation)
 RUN sh -c "cd backend && uv run playwright install --with-deps chromium"

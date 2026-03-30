@@ -88,7 +88,10 @@ export function CommandPalette() {
             <CommandItem onSelect={handleNewChat}>
               <MessageSquarePlusIcon className="mr-2 h-4 w-4" />
               {t.sidebar.newChat}
-              <CommandShortcut>{metaKey}{shiftKey}N</CommandShortcut>
+              <CommandShortcut>
+                {metaKey}
+                {shiftKey}N
+              </CommandShortcut>
             </CommandItem>
             <CommandItem onSelect={handleOpenSettings}>
               <SettingsIcon className="mr-2 h-4 w-4" />
