@@ -55,56 +55,13 @@ def _convert_markdown_to_pdf(
             ]
         )
 
-        # Premium dark theme CSS with beautiful typography
+        # Simple clean CSS for PDF generation with dark theme
         mobile_css = """
-        /* ============================================================
-           BEAUTIFUL MARKDOWN → PDF STYLESHEET
-           Dark theme · Premium typography · Mobile-friendly
-           ============================================================ */
-
-        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
-
-        /* ── Custom Properties ─────────────────────────────────────── */
-        :root {
-          --bg-base:        #0f0f12;
-          --bg-surface:     #16161d;
-          --bg-elevated:    #1e1e28;
-          --bg-highlight:   #252532;
-
-          --border-subtle:  #2a2a38;
-          --border-medium:  #3a3a50;
-
-          --text-primary:   #eeeef2;
-          --text-secondary: #a0a0b8;
-          --text-muted:     #666680;
-
-          --accent-blue:    #5b8dee;
-          --accent-blue-lo: #1e2d52;
-          --accent-purple:  #9d7fe8;
-          --accent-amber:   #f5a623;
-          --accent-cyan:    #4ecdc4;
-          --accent-rose:    #f06292;
-          --accent-green:   #6fcf97;
-
-          --gradient-h2:    linear-gradient(135deg, #1c2d5e 0%, #162044 100%);
-          --gradient-rule:  linear-gradient(90deg, transparent 0%, #5b8dee 40%, #9d7fe8 60%, transparent 100%);
-          --gradient-th:    linear-gradient(180deg, #1e2030 0%, #161622 100%);
-
-          --radius-sm:  6px;
-          --radius-md:  10px;
-          --radius-lg:  14px;
-
-          --shadow-sm:  0 1px 4px rgba(0,0,0,0.4);
-          --shadow-md:  0 4px 16px rgba(0,0,0,0.5);
-          --shadow-lg:  0 8px 32px rgba(0,0,0,0.6);
-          --shadow-glow: 0 0 24px rgba(91,141,238,0.15);
-        }
-
         /* ── Page Setup ────────────────────────────────────────────── */
         @page {
           size: A4;
           margin: 0;
-          background: var(--bg-base);
+          background: #0f0f12;
         }
 
         /* ── Base ──────────────────────────────────────────────────── */
@@ -113,258 +70,148 @@ def _convert_markdown_to_pdf(
         }
 
         html {
-          background: var(--bg-base);
+          background: #0f0f12;
         }
 
         body {
-          font-family: 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-          font-size: 12.5pt;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+          font-size: 11pt;
           font-weight: 400;
-          line-height: 1.75;
-          color: var(--text-primary);
-          background: var(--bg-base);
-          padding: 1.6cm 1.4cm 2cm;
+          line-height: 1.6;
+          color: #eeeef2;
+          background: #0f0f12;
+          padding: 2cm 1.5cm;
           margin: 0;
           word-wrap: break-word;
           overflow-wrap: break-word;
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
-          -webkit-font-smoothing: antialiased;
-          -moz-osx-font-smoothing: grayscale;
-          text-rendering: optimizeLegibility;
         }
 
         /* ── Headings ──────────────────────────────────────────────── */
         h1, h2, h3, h4, h5, h6 {
-          font-family: 'Sora', sans-serif;
+          font-family: inherit;
           page-break-after: avoid;
-          letter-spacing: -0.02em;
+          font-weight: 700;
+          color: #ffffff;
+          margin-top: 1em;
+          margin-bottom: 0.5em;
         }
 
         h1 {
-          font-size: 28pt;
-          font-weight: 800;
-          line-height: 1.2;
-          margin: 0 0 0.15em 0;
-          padding: 0;
-          color: #ffffff;
-          /* Subtle gradient text */
-          background: linear-gradient(135deg, #ffffff 0%, #c8d8ff 60%, #9d7fe8 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-
-        /* Decorative rule below H1 */
-        h1::after {
-          content: '';
-          display: block;
-          height: 3px;
-          width: 64px;
-          margin: 0.45em 0 0.6em 0;
-          background: var(--gradient-rule);
-          border-radius: 2px;
+          font-size: 24pt;
+          margin-top: 0;
+          margin-bottom: 0.8em;
+          border-bottom: 2px solid #5b8dee;
+          padding-bottom: 0.3em;
         }
 
         h2 {
-          font-size: 17pt;
-          font-weight: 700;
-          line-height: 1.3;
-          margin: 1.4em 0 0.55em 0;
-          padding: 0.45em 0.85em 0.45em 1em;
-          color: #ffffff;
-          background: var(--gradient-h2);
-          border: 1px solid var(--border-medium);
-          border-left: 3px solid var(--accent-blue);
-          border-radius: var(--radius-md);
-          box-shadow: var(--shadow-md), var(--shadow-glow);
-          position: relative;
-          overflow: hidden;
-        }
-
-        /* Subtle shimmer stripe on h2 */
-        h2::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(105deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.01) 100%);
-          pointer-events: none;
+          font-size: 18pt;
+          border-bottom: 1px solid #5b8dee;
+          padding-bottom: 0.2em;
         }
 
         h3 {
-          font-size: 14.5pt;
-          font-weight: 600;
-          line-height: 1.35;
-          margin: 1.1em 0 0.45em 0;
-          color: var(--accent-blue);
-          border-bottom: 1.5px solid var(--border-medium);
-          padding-bottom: 0.28em;
-          display: flex;
-          align-items: center;
-          gap: 0.4em;
-        }
-
-        h3::before {
-          content: '▸';
-          color: var(--accent-purple);
-          font-size: 0.7em;
-          flex-shrink: 0;
-          opacity: 0.85;
+          font-size: 14pt;
+          color: #5b8dee;
         }
 
         h4 {
-          font-size: 12.5pt;
-          font-weight: 600;
-          margin: 0.9em 0 0.35em 0;
-          color: var(--accent-purple);
-          letter-spacing: 0.02em;
+          font-size: 12pt;
+          color: #9d7fe8;
         }
 
         h5 {
-          font-size: 11.5pt;
-          font-weight: 600;
-          margin: 0.7em 0 0.3em 0;
-          color: var(--text-secondary);
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-          font-size: 9.5pt;
+          font-size: 11pt;
+          color: #a0a0b8;
         }
 
         h6 {
-          font-size: 9pt;
-          font-weight: 600;
-          margin: 0.6em 0 0.25em 0;
-          color: var(--text-muted);
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
+          font-size: 10pt;
+          color: #a0a0b8;
         }
 
         /* ── Paragraphs ────────────────────────────────────────────── */
         p {
-          margin: 0.65em 0;
+          margin: 0.6em 0;
           text-align: left;
           orphans: 3;
           widows: 3;
-          color: var(--text-primary);
         }
 
         /* ── Inline Emphasis ───────────────────────────────────────── */
         strong {
-          color: var(--accent-amber);
+          color: #f5a623;
           font-weight: 700;
         }
 
         em {
-          color: var(--accent-purple);
+          color: #9d7fe8;
           font-style: italic;
-          font-family: 'Lora', Georgia, serif;
         }
 
         strong em, em strong {
-          color: var(--accent-rose);
+          color: #f06292;
           font-style: italic;
         }
 
         /* ── Links ─────────────────────────────────────────────────── */
         a {
-          color: var(--accent-blue);
-          text-decoration: none;
-          border-bottom: 1px solid rgba(91,141,238,0.35);
-          transition: color 0.15s, border-color 0.15s;
-        }
-
-        a:hover {
-          color: #a0c0ff;
-          border-color: rgba(160,192,255,0.6);
+          color: #5b8dee;
+          text-decoration: underline;
         }
 
         /* ── Horizontal Rule ───────────────────────────────────────── */
         hr {
           border: none;
-          height: 1px;
-          background: var(--gradient-rule);
-          margin: 2em 0;
-          opacity: 0.7;
+          border-top: 1px solid #3a3a50;
+          margin: 1.5em 0;
         }
 
         /* ── Blockquotes ───────────────────────────────────────────── */
         blockquote {
-          border-left: 3px solid var(--accent-blue);
-          margin: 1.2em 0;
-          padding: 0.9em 1.2em 0.9em 1.4em;
-          background: var(--bg-elevated);
-          border-radius: 0 var(--radius-md) var(--radius-md) 0;
-          color: var(--text-secondary);
-          font-style: normal;
-          box-shadow: var(--shadow-sm);
-          position: relative;
-        }
-
-        blockquote::before {
-          content: '"';
-          position: absolute;
-          top: -0.1em;
-          left: 0.5em;
-          font-family: 'Lora', Georgia, serif;
-          font-size: 3em;
-          color: var(--accent-blue);
-          opacity: 0.2;
-          line-height: 1;
-          pointer-events: none;
+          border-left: 3px solid #5b8dee;
+          margin: 1em 0;
+          padding: 0.5em 1em;
+          background: #16161d;
+          color: #a0a0b8;
         }
 
         blockquote strong {
-          color: var(--accent-amber);
+          color: #f5a623;
         }
 
         blockquote p {
           margin: 0.3em 0;
-          color: var(--text-secondary);
         }
 
         /* ── Code ──────────────────────────────────────────────────── */
         code {
-          font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', Consolas, monospace;
-          font-size: 10.5pt;
-          background: var(--bg-elevated);
-          color: var(--accent-cyan);
-          padding: 0.15em 0.45em;
-          border-radius: var(--radius-sm);
-          border: 1px solid var(--border-subtle);
-          font-variant-ligatures: none;
+          font-family: 'SF Mono', Monaco, 'Cascadia Code', Consolas, monospace;
+          font-size: 10pt;
+          background: #1e1e28;
+          color: #4ecdc4;
+          padding: 0.1em 0.3em;
+          border: 1px solid #2a2a38;
         }
 
         pre {
-          background: var(--bg-surface);
-          border: 1px solid var(--border-medium);
-          border-top: 2px solid var(--accent-blue);
-          border-radius: var(--radius-md);
-          padding: 1.1em 1.2em;
+          background: #16161d;
+          border: 1px solid #3a3a50;
+          padding: 1em;
           overflow-x: auto;
-          font-size: 10pt;
-          line-height: 1.65;
+          font-size: 9pt;
+          line-height: 1.5;
           page-break-inside: avoid;
-          margin: 1.1em 0;
-          box-shadow: var(--shadow-md);
-          position: relative;
-        }
-
-        /* Faux "window dots" decoration */
-        pre::before {
-          content: '● ● ●';
-          display: block;
-          font-size: 7pt;
-          color: var(--border-medium);
-          letter-spacing: 0.3em;
-          margin-bottom: 0.8em;
-          opacity: 0.7;
+          margin: 1em 0;
         }
 
         pre code {
           background: transparent;
           padding: 0;
           border: none;
-          color: var(--text-primary);
+          color: #eeeef2;
           font-size: inherit;
         }
 
@@ -372,112 +219,58 @@ def _convert_markdown_to_pdf(
         table {
           border-collapse: collapse;
           width: 100%;
-          margin: 1.3em 0;
-          font-size: 11pt;
+          margin: 1em 0;
+          font-size: 10pt;
           page-break-inside: avoid;
-          background: var(--bg-surface);
-          border: 1px solid var(--border-medium);
-          border-radius: var(--radius-md);
-          overflow: hidden;
-          box-shadow: var(--shadow-md);
+          border: 1px solid #3a3a50;
+          background: #16161d;
         }
 
         th, td {
-          padding: 10px 15px;
+          padding: 8px 12px;
           text-align: left;
-          border: 1px solid var(--border-subtle);
+          border: 1px solid #2a2a38;
         }
 
         th {
-          background: var(--gradient-th);
+          background: #1e1e28;
           font-weight: 700;
-          color: var(--accent-amber);
-          text-transform: uppercase;
-          font-size: 9pt;
-          letter-spacing: 0.07em;
-          border-bottom: 2px solid var(--accent-blue);
+          color: #f5a623;
         }
 
         td {
-          background: var(--bg-surface);
-          color: var(--text-primary);
+          background: #16161d;
+          color: #eeeef2;
         }
 
-        /* Zebra striping */
         tr:nth-child(even) td {
-          background: var(--bg-elevated);
-        }
-
-        tr:hover td {
-          background: var(--bg-highlight);
+          background: #1e1e28;
         }
 
         /* ── Lists ─────────────────────────────────────────────────── */
         ul, ol {
-          margin: 0.65em 0;
-          padding-left: 1.8em;
+          margin: 0.6em 0;
+          padding-left: 2em;
         }
 
         ul {
-          list-style: none;
+          list-style: disc;
         }
 
-        ul li {
-          position: relative;
-          margin: 0.4em 0;
-          padding-left: 0.2em;
+        ul ul {
+          list-style: circle;
         }
 
-        ul li::before {
-          content: '◆';
-          position: absolute;
-          left: -1.3em;
-          color: var(--accent-blue);
-          font-size: 0.5em;
-          top: 0.52em;
-          opacity: 0.85;
-        }
-
-        ul ul li::before {
-          content: '◇';
-          color: var(--accent-purple);
-          opacity: 0.7;
-        }
-
-        ul ul ul li::before {
-          content: '·';
-          color: var(--text-muted);
-          font-size: 1em;
-          top: 0.3em;
+        ul ul ul {
+          list-style: square;
         }
 
         ol {
-          list-style: none;
-          counter-reset: ol-counter;
+          list-style: decimal;
         }
 
-        ol li {
-          counter-increment: ol-counter;
-          position: relative;
-          margin: 0.4em 0;
-          padding-left: 0.2em;
-        }
-
-        ol li::before {
-          content: counter(ol-counter);
-          position: absolute;
-          left: -1.8em;
-          width: 1.4em;
-          text-align: center;
-          background: var(--accent-blue-lo);
-          color: var(--accent-blue);
-          font-size: 8.5pt;
-          font-weight: 700;
-          font-family: 'Sora', sans-serif;
-          border-radius: var(--radius-sm);
-          padding: 0.05em 0;
-          top: 0.22em;
-          border: 1px solid rgba(91,141,238,0.25);
+        li {
+          margin: 0.3em 0;
         }
 
         li > p {
@@ -489,10 +282,9 @@ def _convert_markdown_to_pdf(
           max-width: 100%;
           height: auto;
           display: block;
-          margin: 1.4em auto;
+          margin: 1em auto;
           page-break-inside: avoid;
-          border-radius: var(--radius-md);
-          box-shadow: var(--shadow-lg), 0 0 0 1px var(--border-subtle);
+          border: 1px solid #2a2a38;
         }
 
         /* ── SVG ───────────────────────────────────────────────────── */
@@ -504,37 +296,27 @@ def _convert_markdown_to_pdf(
 
         /* ── Keyboard / Mark / Del ─────────────────────────────────── */
         kbd {
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 9.5pt;
-          background: var(--bg-elevated);
-          color: var(--text-primary);
-          padding: 0.1em 0.5em;
-          border-radius: 4px;
-          border: 1px solid var(--border-medium);
-          border-bottom-width: 2px;
-          box-shadow: 0 1px 0 var(--border-medium);
+          font-family: monospace;
+          font-size: 9pt;
+          background: #1e1e28;
+          color: #eeeef2;
+          padding: 0.1em 0.4em;
+          border: 1px solid #3a3a50;
         }
 
         mark {
-          background: rgba(245,166,35,0.22);
-          color: var(--accent-amber);
-          padding: 0.05em 0.3em;
-          border-radius: 3px;
+          background: #f5a623;
+          color: #000000;
+          padding: 0.1em 0.2em;
         }
 
         del {
-          color: var(--text-muted);
+          color: #666680;
           text-decoration: line-through;
-          opacity: 0.6;
         }
 
         /* ── Print Optimizations ───────────────────────────────────── */
         @media print {
-          body {
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-
           h1, h2, h3, h4, h5, h6 {
             page-break-after: avoid;
           }
@@ -548,15 +330,10 @@ def _convert_markdown_to_pdf(
             page-break-inside: avoid;
           }
 
-          a {
-            border-bottom: none;
-          }
-
           a[href]::after {
             content: ' (' attr(href) ')';
             font-size: 9pt;
-            color: var(--text-muted);
-            font-style: italic;
+            color: #666680;
           }
 
           a[href^="#"]::after,
