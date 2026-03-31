@@ -4,15 +4,20 @@ When the message history is truncated (e.g., by SummarizationMiddleware), the
 original `write_todos` tool call and its ToolMessage can be scrolled out of the
 active context window. This middleware detects that situation and injects a
 reminder message so the model still knows about the outstanding todo list.
+
+This patched version also fixes the "multiple non-consecutive system messages" issue
+by properly merging system message content instead of creating new system messages.
 """
 
 from __future__ import annotations
 
-from typing import Any, override
+from collections.abc import Awaitable, Callable
+from typing import Any, cast, override
 
 from langchain.agents.middleware import TodoListMiddleware
 from langchain.agents.middleware.todo import PlanningState, Todo
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain.agents.middleware.types import ModelCallResult, ModelRequest, ModelResponse
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langgraph.runtime import Runtime
 
 
@@ -51,7 +56,71 @@ class TodoMiddleware(TodoListMiddleware):
     history (e.g., after summarization), the model loses awareness of the current
     todo list. This middleware detects that gap in `before_model` / `abefore_model`
     and injects a reminder message so the model can continue tracking progress.
+
+    This patched version also overrides wrap_model_call and awrap_model_call to fix
+    the "multiple non-consecutive system messages" error with Anthropic's API by
+    properly merging system message content instead of creating new system messages.
     """
+
+    @override
+    def wrap_model_call(
+        self,
+        request: ModelRequest,
+        handler: Callable[[ModelRequest], ModelResponse],
+    ) -> ModelCallResult:
+        """Update the system message by merging content (Anthropic-compatible).
+
+        Instead of creating a new SystemMessage (which causes "multiple non-consecutive
+        system messages" errors), this merges the todo prompt into the existing system
+        message content blocks.
+        """
+        if request.system_message is not None:
+            # Merge with existing system message
+            new_system_content = [
+                *request.system_message.content_blocks,
+                {"type": "text", "text": f"\n\n{self.system_prompt}"},
+            ]
+        else:
+            # Create initial system message
+            new_system_content = [{"type": "text", "text": self.system_prompt}]
+
+        # Create new system message with merged content
+        new_system_message = SystemMessage(
+            content=cast("list[str | dict[str, str]]", new_system_content)
+        )
+
+        # Pass the merged system message to the handler
+        return handler(request.override(system_message=new_system_message))
+
+    @override
+    async def awrap_model_call(
+        self,
+        request: ModelRequest,
+        handler: Callable[[ModelRequest], Awaitable[ModelResponse]],
+    ) -> ModelCallResult:
+        """Update the system message by merging content (async, Anthropic-compatible).
+
+        Instead of creating a new SystemMessage (which causes "multiple non-consecutive
+        system messages" errors), this merges the todo prompt into the existing system
+        message content blocks.
+        """
+        if request.system_message is not None:
+            # Merge with existing system message
+            new_system_content = [
+                *request.system_message.content_blocks,
+                {"type": "text", "text": f"\n\n{self.system_prompt}"},
+            ]
+        else:
+            # Create initial system message
+            new_system_content = [{"type": "text", "text": self.system_prompt}]
+
+        # Create new system message with merged content
+        new_system_message = SystemMessage(
+            content=cast("list[str | dict[str, str]]", new_system_content)
+        )
+
+        # Pass the merged system message to the handler
+        return await handler(request.override(system_message=new_system_message))
 
     @override
     def before_model(

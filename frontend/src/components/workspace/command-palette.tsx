@@ -6,7 +6,7 @@ import {
   SettingsIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   CommandDialog,
@@ -30,11 +30,16 @@ import { useGlobalShortcuts } from "@/hooks/use-global-shortcuts";
 import { SettingsDialog } from "./settings";
 
 export function CommandPalette() {
+  const [mounted, setMounted] = useState(false);
   const { t } = useI18n();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleNewChat = useCallback(() => {
     router.push("/workspace/chats/new");
@@ -62,6 +67,10 @@ export function CommandPalette() {
   );
 
   useGlobalShortcuts(shortcuts);
+
+  if (!mounted) {
+    return null;
+  }
 
   const isMac =
     typeof navigator !== "undefined" && navigator.userAgent.includes("Mac");
