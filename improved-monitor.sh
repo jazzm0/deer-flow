@@ -1,127 +1,105 @@
 #!/bin/bash
-# Enhanced DeerFlow Monitor - Shows errors and active status
-# Usage: ./improved-monitor.sh [--watch]
+# DeerFlow Live Monitor
+# Streams logs from all backend services continuously.
+# Usage: ./improved-monitor.sh [--status]
+#   (no args)  - live log stream (default)
+#   --status   - one-shot container + API health snapshot
 
-WATCH_MODE=false
-if [ "$1" = "--watch" ] || [ "$1" = "-w" ]; then
-    WATCH_MODE=true
-fi
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-check_status() {
-    clear
-    echo "╔════════════════════════════════════════════════════════════════════════╗"
-    echo "║                    DeerFlow Enhanced Monitor                           ║"
-    echo "╚════════════════════════════════════════════════════════════════════════╝"
+# ── colours ────────────────────────────────────────────────────────────────────
+RED='\033[0;31m'; YELLOW='\033[1;33m'; GREEN='\033[0;32m'
+CYAN='\033[0;36m'; BLUE='\033[0;34m'; MAGENTA='\033[0;35m'
+BOLD='\033[1m'; DIM='\033[2m'; NC='\033[0m'
+
+# ── one-shot status snapshot ───────────────────────────────────────────────────
+show_status() {
     echo ""
-    echo "⏰ Time: $(date '+%Y-%m-%d %H:%M:%S')"
-    echo ""
-
-    # Container Status
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "📦 Container Status"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    docker ps --filter "name=deer-flow" --format "table {{.Names}}\t{{.Status}}\t{{.State}}"
+    echo -e "${BOLD}╔═══════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}║       DeerFlow — Service Status       ║${NC}"
+    echo -e "${BOLD}╚═══════════════════════════════════════╝${NC}"
+    echo -e "${DIM}$(date '+%Y-%m-%d %H:%M:%S')${NC}"
     echo ""
 
-    # API Health
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "🌐 API Health Check"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:2026/api/models 2>/dev/null)
-    if [ "$HTTP_CODE" = "200" ]; then
-        echo "✅ API responding (HTTP $HTTP_CODE)"
-    else
-        echo "❌ API not responding properly (HTTP $HTTP_CODE)"
-    fi
+    echo -e "${BOLD}Containers${NC}"
+    docker ps --filter "name=deer-flow" \
+        --format "  {{.Names}}\t{{.Status}}" 2>/dev/null \
+    | awk -F'\t' '{
+        status = $2
+        icon = (status ~ /^Up/) ? "✅" : "❌"
+        printf "  %s  %-30s %s\n", icon, $1, status
+    }'
     echo ""
 
-    # Check for LangGraph errors
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "🔥 Recent Critical Errors (last 20 lines)"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-    ERRORS=$(docker logs deer-flow-langgraph 2>&1 | tail -200 | grep -i "error\|exception\|failed\|ValueError" | tail -20)
-    if [ -z "$ERRORS" ]; then
-        echo "✅ No recent critical errors"
-    else
-        echo "$ERRORS" | while IFS= read -r line; do
-            # Highlight specific error types
-            if echo "$line" | grep -q "multiple non-consecutive system messages"; then
-                echo "🚨 CRITICAL: $line"
-            elif echo "$line" | grep -q "ValueError"; then
-                echo "⚠️  $line"
-            elif echo "$line" | grep -q "Background run failed"; then
-                echo "❌ $line"
-            else
-                echo "$line"
-            fi
-        done
-    fi
-    echo ""
-
-    # Active runs
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "🏃 Run Status"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-    RECENT_LOGS=$(docker logs deer-flow-langgraph 2>&1 | tail -100)
-
-    STARTED=$(echo "$RECENT_LOGS" | grep "Starting background run" | wc -l | tr -d ' ')
-    COMPLETED=$(echo "$RECENT_LOGS" | grep "Background run.*completed" | wc -l | tr -d ' ')
-    FAILED=$(echo "$RECENT_LOGS" | grep "Background run.*failed" | wc -l | tr -d ' ')
-
-    echo "📊 Last 100 log lines:"
-    echo "   • Started: $STARTED"
-    echo "   • Completed: $COMPLETED"
-    echo "   • Failed: $FAILED"
-
-    # Check if stuck (no logs in last 5 minutes)
-    LAST_LOG_TIME=$(docker exec deer-flow-langgraph stat -c %Y /app/logs/langgraph.log 2>/dev/null || echo "0")
-    CURRENT_TIME=$(date +%s)
-    TIME_DIFF=$((CURRENT_TIME - LAST_LOG_TIME))
-
-    if [ "$TIME_DIFF" -gt 300 ] && [ "$LAST_LOG_TIME" != "0" ]; then
-        echo ""
-        echo "⚠️  WARNING: No activity for ${TIME_DIFF}s (may be stuck)"
-    else
-        echo "   • Status: Active (last update ${TIME_DIFF}s ago)"
-    fi
-    echo ""
-
-    # Show last 3 run statuses
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "📝 Last 3 Run Results"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    docker logs deer-flow-langgraph 2>&1 | grep -E "Background run (completed|failed)" | tail -3 | while read -r line; do
-        if echo "$line" | grep -q "completed"; then
-            echo "✅ $line"
+    echo -e "${BOLD}API Health${NC}"
+    for endpoint in \
+        "Gateway|http://localhost:2026/api/health" \
+        "LangGraph|http://localhost:2026/api/langgraph/ok" \
+        "Models|http://localhost:2026/api/models"; do
+        label="${endpoint%%|*}"
+        url="${endpoint##*|}"
+        code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 3 "$url" 2>/dev/null)
+        if [ "$code" = "200" ]; then
+            echo -e "  ✅  ${label} (${DIM}${code}${NC})"
         else
-            echo "❌ $line"
-        fi
-    done
-    echo ""
-
-    # Show recent HTTP requests
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "🌐 Recent HTTP Activity (last 5)"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    docker logs deer-flow-langgraph 2>&1 | grep "HTTP Request:" | tail -5 | while read -r line; do
-        if echo "$line" | grep -q "200 OK"; then
-            echo "✅ ${line##*HTTP Request: }"
-        else
-            echo "⚠️  ${line##*HTTP Request: }"
+            echo -e "  ❌  ${label} (${DIM}${code:-timeout}${NC})"
         fi
     done
     echo ""
 }
 
-if [ "$WATCH_MODE" = true ]; then
-    echo "🔄 Starting watch mode (updates every 10 seconds, Ctrl+C to exit)..."
+# ── live log stream ─────────────────────────────────────────────────────────────
+stream_logs() {
+    show_status
+
+    echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BOLD}  Live Log Stream   ${DIM}(Ctrl+C to exit)${NC}"
+    echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
-    while true; do
-        check_status
-        sleep 10
-    done
-else
-    check_status
-fi
+
+    # Colour-code lines by service and content
+    colorize() {
+        local svc="$1"
+        while IFS= read -r line; do
+            # service prefix colour
+            case "$svc" in
+                langgraph) prefix="${CYAN}[langgraph]${NC} " ;;
+                gateway)   prefix="${BLUE}[gateway]  ${NC} " ;;
+                frontend)  prefix="${MAGENTA}[frontend] ${NC} " ;;
+                *)         prefix="${DIM}[${svc}]${NC} " ;;
+            esac
+
+            # highlight errors / warnings / thinking in the line itself
+            if echo "$line" | grep -qiE "error|exception|traceback|failed|critical"; then
+                echo -e "${prefix}${RED}${line}${NC}"
+            elif echo "$line" | grep -qiE "warning|warn"; then
+                echo -e "${prefix}${YELLOW}${line}${NC}"
+            elif echo "$line" | grep -qiE "thinking|<think|tool_call|invoke|Starting|completed|run started"; then
+                echo -e "${prefix}${GREEN}${line}${NC}"
+            elif echo "$line" | grep -qiE "info"; then
+                echo -e "${prefix}${DIM}${line}${NC}"
+            else
+                echo -e "${prefix}${line}"
+            fi
+        done
+    }
+
+    # Stream all three log files simultaneously; label each line with its source.
+    # Use process substitution so all three tail -f run in parallel.
+    {
+        tail -f "${SCRIPT_DIR}/logs/langgraph.log" 2>/dev/null | colorize langgraph &
+        tail -f "${SCRIPT_DIR}/logs/gateway.log"   2>/dev/null | colorize gateway   &
+        tail -f "${SCRIPT_DIR}/logs/frontend.log"  2>/dev/null | colorize frontend  &
+        wait
+    }
+}
+
+# ── entrypoint ─────────────────────────────────────────────────────────────────
+case "${1:-}" in
+    --status|-s)
+        show_status
+        ;;
+    *)
+        stream_logs
+        ;;
+esac

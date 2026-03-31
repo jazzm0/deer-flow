@@ -41,12 +41,13 @@ WORKDIR /app
 # Copy frontend source code
 COPY backend ./backend
 
-# Install dependencies with cache mount
+# Install dependencies into /app/.venv (outside the backend/ bind-mount path)
+# so the host backend/ volume mount cannot shadow the venv at container start.
 RUN --mount=type=cache,target=/root/.cache/uv \
-    sh -c "cd backend && UV_INDEX_URL=${UV_INDEX_URL:-https://pypi.org/simple} uv sync"
+    sh -c "cd backend && UV_INDEX_URL=${UV_INDEX_URL:-https://pypi.org/simple} UV_PROJECT_ENVIRONMENT=/app/.venv uv sync"
 
 # Install Playwright browsers (Chromium for PDF generation)
-RUN sh -c "cd backend && uv run playwright install --with-deps chromium"
+RUN sh -c "cd backend && UV_PROJECT_ENVIRONMENT=/app/.venv uv run playwright install --with-deps chromium"
 
 # Expose ports (gateway: 8001, langgraph: 2024)
 EXPOSE 8001 2024
