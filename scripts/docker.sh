@@ -277,7 +277,7 @@ stop() {
         export DEER_FLOW_ROOT="$PROJECT_ROOT"
     fi
     echo "Stopping Docker development services..."
-    cd "$DOCKER_DIR" && $COMPOSE_CMD down
+    cd "$DOCKER_DIR" && $COMPOSE_CMD down --volumes
     echo "Cleaning up sandbox containers..."
     "$SCRIPT_DIR/cleanup-containers.sh" deer-flow-sandbox 2>/dev/null || true
     echo -e "${GREEN}✓ Docker services stopped${NC}"
