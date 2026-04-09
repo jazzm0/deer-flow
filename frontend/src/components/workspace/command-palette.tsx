@@ -36,6 +36,7 @@ export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [isMac, setIsMac] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -68,12 +69,9 @@ export function CommandPalette() {
 
   useGlobalShortcuts(shortcuts);
 
-  if (!mounted) {
-    return null;
-  }
-
-  const isMac =
-    typeof navigator !== "undefined" && navigator.userAgent.includes("Mac");
+  useEffect(() => {
+    setIsMac(navigator.userAgent.includes("Mac"));
+  }, []);
   const metaKey = isMac ? "⌘" : "Ctrl+";
   const shiftKey = isMac ? "⇧" : "Shift+";
 
