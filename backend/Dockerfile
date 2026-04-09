@@ -80,6 +80,9 @@ WORKDIR /app
 # Copy backend with pre-built virtualenv from builder
 COPY --from=builder /app/backend ./backend
 
+# Install Playwright browsers (Chromium for PDF generation)
+RUN sh -c "cd backend && uv run playwright install --with-deps chromium"
+
 # Expose ports (gateway: 8001, langgraph: 2024)
 EXPOSE 8001 2024
 

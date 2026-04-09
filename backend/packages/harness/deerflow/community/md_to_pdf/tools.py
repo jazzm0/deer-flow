@@ -4,6 +4,7 @@ Markdown to Mobile-Friendly PDF Tool - Convert markdown files with charts and im
 Uses Playwright with Chromium for highest quality rendering.
 """
 
+import asyncio
 import logging
 from pathlib import Path
 from typing import Annotated
@@ -392,7 +393,7 @@ def _convert_markdown_to_pdf(
 
 
 @tool("markdown_to_pdf", parse_docstring=True)
-def markdown_to_pdf_tool(
+async def markdown_to_pdf_tool(
         runtime: ToolRuntime[ContextT, ThreadState],
         markdown_file: str,
         output_filename: str | None = None,
@@ -481,8 +482,10 @@ def markdown_to_pdf_tool(
 
     output_path = Path(outputs_path) / pdf_filename
 
-    # Convert directly - Playwright works the same in local and containerized environments
-    success, message = _convert_markdown_to_pdf(md_path, output_path, mobile_friendly=True)
+    # Run blocking Playwright conversion in a thread pool to avoid blocking the async event loop
+    success, message = await asyncio.get_event_loop().run_in_executor(
+        None, _convert_markdown_to_pdf, md_path, output_path, True
+    )
 
     if not success:
         return Command(
