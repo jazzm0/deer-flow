@@ -188,6 +188,8 @@ services:
     extra_hosts:
       # For Linux: map host.docker.internal to host gateway
       - "host.docker.internal:host-gateway"
+      # Local Ollama server on LAN
+      - "ollama-host:192.168.178.144"
     networks:
       - deer-flow-dev
     restart: unless-stopped
@@ -243,6 +245,8 @@ services:
     extra_hosts:
       # For Linux: map host.docker.internal to host gateway
       - "host.docker.internal:host-gateway"
+      # Local Ollama server on LAN
+      - "ollama-host:192.168.178.144"
     networks:
       - deer-flow-dev
     restart: unless-stopped
