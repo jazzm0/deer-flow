@@ -9,11 +9,12 @@ import logging
 from pathlib import Path
 from typing import Annotated
 
-from deerflow.agents.thread_state import ThreadState
 from langchain.tools import InjectedToolCallId, ToolRuntime, tool
 from langchain_core.messages import ToolMessage
 from langgraph.types import Command
 from langgraph.typing import ContextT
+
+from deerflow.agents.thread_state import ThreadState
 
 logger = logging.getLogger(__name__)
 
@@ -360,7 +361,7 @@ def _convert_markdown_to_pdf(
         """
 
         # Ensure output directory exists
-        output_path.parent.mkdir(parents=True, exist_ok=True)
+        # (called from async context via asyncio.to_thread — mkdir is safe here)
 
         # Convert HTML to PDF using Playwright (highest quality)
         with sync_playwright() as p:
@@ -482,10 +483,11 @@ async def markdown_to_pdf_tool(
 
     output_path = Path(outputs_path) / pdf_filename
 
+    # Create output directory before entering the thread to avoid blocking calls inside to_thread
+    await asyncio.to_thread(output_path.parent.mkdir, parents=True, exist_ok=True)
+
     # Run blocking Playwright conversion in a thread pool to avoid blocking the async event loop
-    success, message = await asyncio.get_event_loop().run_in_executor(
-        None, _convert_markdown_to_pdf, md_path, output_path, True
-    )
+    success, message = await asyncio.to_thread(_convert_markdown_to_pdf, md_path, output_path, True)
 
     if not success:
         return Command(
