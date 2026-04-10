@@ -529,7 +529,7 @@ class SubagentExecutor:
         return task_id
 
 
-MAX_CONCURRENT_SUBAGENTS = 3
+MAX_CONCURRENT_SUBAGENTS = 2
 
 
 def request_cancel_background_task(task_id: str) -> None:

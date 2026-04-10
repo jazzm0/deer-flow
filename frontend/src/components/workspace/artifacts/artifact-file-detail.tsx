@@ -305,7 +305,17 @@ export function ArtifactFilePreview({
         <Streamdown
           className="size-full"
           {...streamdownPlugins}
-          components={{ a: ArtifactLink }}
+          components={{
+            a: ArtifactLink,
+            p: ({ children, ...props }) => {
+              // Check if paragraph contains only image wrappers (divs with data-streamdown)
+              const hasBlockElements = Array.isArray(children) && children.some((child: any) =>
+                child?.type === 'div' || (child?.props && typeof child.props === 'object')
+              );
+              // Render as div if it contains block-level elements to avoid invalid HTML
+              return hasBlockElements ? <div {...props}>{children}</div> : <p {...props}>{children}</p>;
+            }
+          }}
         >
           {content ?? ""}
         </Streamdown>
