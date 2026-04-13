@@ -13,6 +13,7 @@ at the correct positions (immediately after each dangling AIMessage), not append
 to the end of the message list as before_model + add_messages reducer would do.
 """
 
+import json
 import logging
 from collections.abc import Awaitable, Callable
 from typing import override
@@ -34,37 +35,42 @@ class DanglingToolCallMiddleware(AgentMiddleware[AgentState]):
     """
 
     @staticmethod
-    def _extract_tool_call_ids(msg: AIMessage) -> list[tuple[str, str]]:
-        """Extract (id, name) pairs from all tool call representations in an AIMessage.
+    def _message_tool_calls(msg) -> list[dict]:
+        """Return normalized tool calls from structured fields or raw provider payloads."""
+        tool_calls = getattr(msg, "tool_calls", None) or []
+        if tool_calls:
+            return list(tool_calls)
 
-        Handles three storage locations:
-          1. msg.tool_calls — standard LangChain list of dicts
-          2. msg.additional_kwargs["tool_use"] — raw Anthropic streaming blocks (list)
-          3. msg.additional_kwargs["tool_calls"] — OpenAI-style fallback (list)
-        """
-        results: list[tuple[str, str]] = []
-        seen: set[str] = set()
+        raw_tool_calls = (getattr(msg, "additional_kwargs", None) or {}).get("tool_calls") or []
+        normalized: list[dict] = []
+        for raw_tc in raw_tool_calls:
+            if not isinstance(raw_tc, dict):
+                continue
 
-        def _add(tc_id: str | None, tc_name: str) -> None:
-            if tc_id and tc_id not in seen:
-                seen.add(tc_id)
-                results.append((tc_id, tc_name))
+            function = raw_tc.get("function")
+            name = raw_tc.get("name")
+            if not name and isinstance(function, dict):
+                name = function.get("name")
 
-        for tc in getattr(msg, "tool_calls", None) or []:
-            _add(tc.get("id"), tc.get("name", "unknown"))
+            args = raw_tc.get("args", {})
+            if not args and isinstance(function, dict):
+                raw_args = function.get("arguments")
+                if isinstance(raw_args, str):
+                    try:
+                        parsed_args = json.loads(raw_args)
+                    except (TypeError, ValueError, json.JSONDecodeError):
+                        parsed_args = {}
+                    args = parsed_args if isinstance(parsed_args, dict) else {}
 
-        extra = getattr(msg, "additional_kwargs", {}) or {}
+            normalized.append(
+                {
+                    "id": raw_tc.get("id"),
+                    "name": name or "unknown",
+                    "args": args if isinstance(args, dict) else {},
+                }
+            )
 
-        for block in extra.get("tool_use", None) or []:
-            if isinstance(block, dict):
-                _add(block.get("id"), block.get("name", "unknown"))
-
-        for tc in extra.get("tool_calls", None) or []:
-            if isinstance(tc, dict):
-                fn = tc.get("function", {}) or {}
-                _add(tc.get("id"), fn.get("name", "unknown"))
-
-        return results
+        return normalized
 
     def _build_patched_messages(self, messages: list) -> list | None:
         """Return a new message list with patches inserted at the correct positions.
@@ -84,15 +90,9 @@ class DanglingToolCallMiddleware(AgentMiddleware[AgentState]):
         for msg in messages:
             if not isinstance(msg, AIMessage):
                 continue
-            extracted = self._extract_tool_call_ids(msg)
-            logger.debug(
-                f"DanglingToolCallMiddleware: AIMessage id={getattr(msg, 'id', '?')} "
-                f"tool_calls={[tc.get('id') for tc in (getattr(msg, 'tool_calls', None) or [])]} "
-                f"additional_kwargs_keys={list((getattr(msg, 'additional_kwargs', None) or {}).keys())} "
-                f"extracted_ids={[tc_id for tc_id, _ in extracted]}"
-            )
-            for tc_id, _ in extracted:
-                if tc_id not in existing_tool_msg_ids:
+            for tc in self._message_tool_calls(msg):
+                tc_id = tc.get("id")
+                if tc_id and tc_id not in existing_tool_msg_ids:
                     needs_patch = True
                     break
             if needs_patch:
@@ -110,13 +110,14 @@ class DanglingToolCallMiddleware(AgentMiddleware[AgentState]):
             patched.append(msg)
             if not isinstance(msg, AIMessage):
                 continue
-            for tc_id, tc_name in self._extract_tool_call_ids(msg):
-                if tc_id not in existing_tool_msg_ids and tc_id not in patched_ids:
+            for tc in self._message_tool_calls(msg):
+                tc_id = tc.get("id")
+                if tc_id and tc_id not in existing_tool_msg_ids and tc_id not in patched_ids:
                     patched.append(
                         ToolMessage(
                             content="[Tool call was interrupted and did not return a result.]",
                             tool_call_id=tc_id,
-                            name=tc_name,
+                            name=tc.get("name", "unknown"),
                             status="error",
                         )
                     )
