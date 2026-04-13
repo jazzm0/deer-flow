@@ -1,4 +1,5 @@
 import logging
+import os
 
 from langchain.agents import create_agent
 from langchain.agents.middleware import AgentMiddleware, SummarizationMiddleware
@@ -22,6 +23,12 @@ from deerflow.models import create_chat_model
 
 logger = logging.getLogger(__name__)
 
+if os.environ.get("LANGCHAIN_VERBOSE", "").lower() in ("1", "true"):
+    from langchain_core.globals import set_verbose
+
+    set_verbose(True)
+    logger.info("LangChain verbose mode enabled")
+
 
 def _resolve_model_name(requested_model_name: str | None = None) -> str:
     """Resolve a runtime model name safely, falling back to default if invalid. Returns None if no models are configured."""
@@ -34,7 +41,8 @@ def _resolve_model_name(requested_model_name: str | None = None) -> str:
         return requested_model_name
 
     if requested_model_name and requested_model_name != default_model_name:
-        logger.warning(f"Model '{requested_model_name}' not found in config; fallback to default model '{default_model_name}'.")
+        logger.warning(
+            f"Model '{requested_model_name}' not found in config; fallback to default model '{default_model_name}'.")
     return default_model_name
 
 
@@ -205,7 +213,8 @@ Being proactive with task management demonstrates thoroughness and ensures all r
 # ViewImageMiddleware should be before ClarificationMiddleware to inject image details before LLM
 # ToolErrorHandlingMiddleware should be before ClarificationMiddleware to convert tool exceptions to ToolMessages
 # ClarificationMiddleware should be last to intercept clarification requests after model calls
-def _build_middlewares(config: RunnableConfig, model_name: str | None, agent_name: str | None = None, custom_middlewares: list[AgentMiddleware] | None = None):
+def _build_middlewares(config: RunnableConfig, model_name: str | None, agent_name: str | None = None,
+                       custom_middlewares: list[AgentMiddleware] | None = None):
     """Build middleware chain based on runtime configuration.
 
     Args:
@@ -297,9 +306,11 @@ def make_lead_agent(config: RunnableConfig):
     model_config = app_config.get_model_config(model_name)
 
     if model_config is None:
-        raise ValueError("No chat model could be resolved. Please configure at least one model in config.yaml or provide a valid 'model_name'/'model' in the request.")
+        raise ValueError(
+            "No chat model could be resolved. Please configure at least one model in config.yaml or provide a valid 'model_name'/'model' in the request.")
     if thinking_enabled and not model_config.supports_thinking:
-        logger.warning(f"Thinking mode is enabled but model '{model_name}' does not support it; fallback to non-thinking mode.")
+        logger.warning(
+            f"Thinking mode is enabled but model '{model_name}' does not support it; fallback to non-thinking mode.")
         thinking_enabled = False
 
     logger.info(
@@ -334,14 +345,17 @@ def make_lead_agent(config: RunnableConfig):
             model=create_chat_model(name=model_name, thinking_enabled=thinking_enabled),
             tools=get_available_tools(model_name=model_name, subagent_enabled=subagent_enabled) + [setup_agent],
             middleware=_build_middlewares(config, model_name=model_name),
-            system_prompt=apply_prompt_template(subagent_enabled=subagent_enabled, max_concurrent_subagents=max_concurrent_subagents, available_skills=set(["bootstrap"])),
+            system_prompt=apply_prompt_template(subagent_enabled=subagent_enabled,
+                                                max_concurrent_subagents=max_concurrent_subagents,
+                                                available_skills=set(["bootstrap"])),
             state_schema=ThreadState,
         )
 
     # Default lead agent (unchanged behavior)
     return create_agent(
         model=create_chat_model(name=model_name, thinking_enabled=thinking_enabled, reasoning_effort=reasoning_effort),
-        tools=get_available_tools(model_name=model_name, groups=agent_config.tool_groups if agent_config else None, subagent_enabled=subagent_enabled),
+        tools=get_available_tools(model_name=model_name, groups=agent_config.tool_groups if agent_config else None,
+                                  subagent_enabled=subagent_enabled),
         middleware=_build_middlewares(config, model_name=model_name, agent_name=agent_name),
         system_prompt=apply_prompt_template(
             subagent_enabled=subagent_enabled, max_concurrent_subagents=max_concurrent_subagents, agent_name=agent_name, available_skills=set(agent_config.skills) if agent_config and agent_config.skills is not None else None

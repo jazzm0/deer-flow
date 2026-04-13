@@ -262,7 +262,7 @@ start() {
 # View Docker development logs
 logs() {
     local service=""
-    
+
     case "$1" in
         --frontend)
             service="frontend"
@@ -280,16 +280,20 @@ logs() {
             service="provisioner"
             echo -e "${BLUE}Viewing provisioner logs...${NC}"
             ;;
+        --searxng)
+            service="searxng"
+            echo -e "${BLUE}Viewing SearXNG logs...${NC}"
+            ;;
         "")
             echo -e "${BLUE}Viewing all logs...${NC}"
             ;;
         *)
             echo -e "${YELLOW}Unknown option: $1${NC}"
-            echo "Usage: $0 logs [--frontend|--gateway|--nginx|--provisioner]"
+            echo "Usage: $0 logs [--frontend|--gateway|--nginx|--provisioner|--searxng]"
             exit 1
             ;;
     esac
-    
+
     cd "$DOCKER_DIR" && $COMPOSE_CMD logs -f $service
 }
 
@@ -301,7 +305,7 @@ stop() {
         export DEER_FLOW_ROOT="$PROJECT_ROOT"
     fi
     echo "Stopping Docker development services..."
-    cd "$DOCKER_DIR" && $COMPOSE_CMD down
+    cd "$DOCKER_DIR" && $COMPOSE_CMD down --volumes
     echo "Cleaning up sandbox containers..."
     "$SCRIPT_DIR/cleanup-containers.sh" deer-flow-sandbox 2>/dev/null || true
     echo -e "${GREEN}✓ Docker services stopped${NC}"
@@ -339,6 +343,7 @@ help() {
     echo "                  --gateway    View gateway logs only"
     echo "                  --nginx      View nginx logs only"
     echo "                  --provisioner View provisioner logs only"
+    echo "                  --searxng    View SearXNG logs only"
     echo "  stop          - Stop Docker development services"
     echo "  help          - Show this help message"
     echo ""

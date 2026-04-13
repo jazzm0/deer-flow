@@ -48,7 +48,8 @@ help:
 	@echo "  make docker-stop     - Stop Docker development services"
 	@echo "  make docker-logs     - View Docker development logs"
 	@echo "  make docker-logs-frontend - View Docker frontend logs"
-	@echo "  make docker-logs-gateway - View Docker gateway logs"
+	@echo "  make docker-logs-gateway  - View Docker gateway logs"
+	@echo "  make docker-logs-searxng  - View Docker SearXNG logs"
 
 ## Setup & Diagnosis
 setup:
@@ -197,6 +198,8 @@ docker-logs-frontend:
 	@$(RUN_WITH_GIT_BASH) ./scripts/docker.sh logs --frontend
 docker-logs-gateway:
 	@$(RUN_WITH_GIT_BASH) ./scripts/docker.sh logs --gateway
+docker-logs-searxng:
+	@$(RUN_WITH_GIT_BASH) ./scripts/docker.sh logs --searxng
 
 # ==========================================
 # Production Docker Commands

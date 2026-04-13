@@ -21,7 +21,7 @@ from typing import override
 from langchain.agents import AgentState
 from langchain.agents.middleware import AgentMiddleware
 from langchain.agents.middleware.types import ModelCallResult, ModelRequest, ModelResponse
-from langchain_core.messages import ToolMessage
+from langchain_core.messages import AIMessage, ToolMessage
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ class DanglingToolCallMiddleware(AgentMiddleware[AgentState]):
         # Check if any patching is needed
         needs_patch = False
         for msg in messages:
-            if getattr(msg, "type", None) != "ai":
+            if not isinstance(msg, AIMessage):
                 continue
             for tc in self._message_tool_calls(msg):
                 tc_id = tc.get("id")
@@ -99,6 +99,7 @@ class DanglingToolCallMiddleware(AgentMiddleware[AgentState]):
                 break
 
         if not needs_patch:
+            logger.debug(f"DanglingToolCallMiddleware: no dangling tool calls found (existing_tool_msg_ids={existing_tool_msg_ids})")
             return None
 
         # Build new list with patches inserted right after each dangling AIMessage
@@ -107,7 +108,7 @@ class DanglingToolCallMiddleware(AgentMiddleware[AgentState]):
         patch_count = 0
         for msg in messages:
             patched.append(msg)
-            if getattr(msg, "type", None) != "ai":
+            if not isinstance(msg, AIMessage):
                 continue
             for tc in self._message_tool_calls(msg):
                 tc_id = tc.get("id")
