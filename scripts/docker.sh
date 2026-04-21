@@ -169,14 +169,14 @@ start() {
     sandbox_mode="$(detect_sandbox_mode)"
 
     if $gateway_mode; then
-        services="frontend gateway nginx"
+        services="searxng frontend gateway nginx"
         if [ "$sandbox_mode" = "provisioner" ]; then
-            services="frontend gateway provisioner nginx"
+            services="searxng frontend gateway provisioner nginx"
         fi
     else
-        services="frontend gateway langgraph nginx"
+        services="searxng frontend gateway langgraph nginx"
         if [ "$sandbox_mode" = "provisioner" ]; then
-            services="frontend gateway langgraph provisioner nginx"
+            services="searxng frontend gateway langgraph provisioner nginx"
         fi
     fi
 
