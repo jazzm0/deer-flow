@@ -19,3 +19,19 @@ engines:
     disabled: false
   - name: startpage
     disabled: false
+  - name: google
+    disabled: false
+  - name: bing
+    disabled: false
+  - name: wikipedia
+    disabled: false
+  - name: arxiv
+    disabled: false
+  - name: github
+    disabled: false
+  - name: stackoverflow
+    disabled: false
+  - name: reddit
+    disabled: false
+  - name: hackernews
+    disabled: false
