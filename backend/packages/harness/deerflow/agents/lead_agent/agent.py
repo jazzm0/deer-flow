@@ -1,4 +1,5 @@
 import logging
+import os
 
 from langchain.agents import create_agent
 from langchain.agents.middleware import AgentMiddleware
@@ -23,6 +24,12 @@ from deerflow.models import create_chat_model
 
 logger = logging.getLogger(__name__)
 
+if os.environ.get("LANGCHAIN_VERBOSE", "").lower() in ("1", "true"):
+    from langchain_core.globals import set_verbose
+
+    set_verbose(True)
+    logger.info("LangChain verbose mode enabled")
+
 
 def _get_runtime_config(config: RunnableConfig) -> dict:
     """Merge legacy configurable options with LangGraph runtime context."""
@@ -44,7 +51,8 @@ def _resolve_model_name(requested_model_name: str | None = None, *, app_config: 
         return requested_model_name
 
     if requested_model_name and requested_model_name != default_model_name:
-        logger.warning(f"Model '{requested_model_name}' not found in config; fallback to default model '{default_model_name}'.")
+        logger.warning(
+            f"Model '{requested_model_name}' not found in config; fallback to default model '{default_model_name}'.")
     return default_model_name
 
 
@@ -342,9 +350,11 @@ def _make_lead_agent(config: RunnableConfig, *, app_config: AppConfig):
     model_config = resolved_app_config.get_model_config(model_name)
 
     if model_config is None:
-        raise ValueError("No chat model could be resolved. Please configure at least one model in config.yaml or provide a valid 'model_name'/'model' in the request.")
+        raise ValueError(
+            "No chat model could be resolved. Please configure at least one model in config.yaml or provide a valid 'model_name'/'model' in the request.")
     if thinking_enabled and not model_config.supports_thinking:
-        logger.warning(f"Thinking mode is enabled but model '{model_name}' does not support it; fallback to non-thinking mode.")
+        logger.warning(
+            f"Thinking mode is enabled but model '{model_name}' does not support it; fallback to non-thinking mode.")
         thinking_enabled = False
 
     logger.info(

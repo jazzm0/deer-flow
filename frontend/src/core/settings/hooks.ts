@@ -1,59 +1,62 @@
-import { useCallback, useMemo, useSyncExternalStore } from "react";
+import {useCallback, useMemo, useSyncExternalStore} from "react";
 
-import {
-  DEFAULT_LOCAL_SETTINGS,
-  applyThreadModelOverride,
-  type LocalSettings,
-} from "./local";
+import {applyThreadOverrides, DEFAULT_LOCAL_SETTINGS, type LocalSettings,} from "./local";
 import {
   getBaseSettingsSnapshot,
   getThreadModelSnapshot,
+  getThreadModeSnapshot,
+  type LocalSettingsSetter,
   subscribe,
   updateLocalSettings,
   updateThreadSettings,
-  type LocalSettingsSetter,
 } from "./store";
 
 export function useLocalSettings(): [LocalSettings, LocalSettingsSetter] {
-  const settings = useSyncExternalStore(
-    subscribe,
-    getBaseSettingsSnapshot,
-    () => DEFAULT_LOCAL_SETTINGS,
-  );
+    const settings = useSyncExternalStore(
+        subscribe,
+        getBaseSettingsSnapshot,
+        () => DEFAULT_LOCAL_SETTINGS,
+    );
 
-  const setSettings = useCallback<LocalSettingsSetter>((key, value) => {
-    updateLocalSettings(key, value);
-  }, []);
+    const setSettings = useCallback<LocalSettingsSetter>((key, value) => {
+        updateLocalSettings(key, value);
+    }, []);
 
-  return [settings, setSettings];
+    return [settings, setSettings];
 }
 
 export function useThreadSettings(
-  threadId: string,
+    threadId: string,
 ): [LocalSettings, LocalSettingsSetter] {
-  const baseSettings = useSyncExternalStore(
-    subscribe,
-    getBaseSettingsSnapshot,
-    () => DEFAULT_LOCAL_SETTINGS,
-  );
+    const baseSettings = useSyncExternalStore(
+        subscribe,
+        getBaseSettingsSnapshot,
+        () => DEFAULT_LOCAL_SETTINGS,
+    );
 
-  const threadModelName = useSyncExternalStore(
-    subscribe,
-    () => getThreadModelSnapshot(threadId),
-    () => undefined,
-  );
+    const threadModelName = useSyncExternalStore(
+        subscribe,
+        () => getThreadModelSnapshot(threadId),
+        () => undefined,
+    );
 
-  const settings = useMemo(
-    () => applyThreadModelOverride(baseSettings, threadModelName),
-    [baseSettings, threadModelName],
-  );
+    const threadMode = useSyncExternalStore(
+        subscribe,
+        () => getThreadModeSnapshot(threadId),
+        () => undefined,
+    );
 
-  const setSettings = useCallback<LocalSettingsSetter>(
-    (key, value) => {
-      updateThreadSettings(threadId, key, value);
-    },
-    [threadId],
-  );
+    const settings = useMemo(
+        () => applyThreadOverrides(baseSettings, threadModelName, threadMode),
+        [baseSettings, threadModelName, threadMode],
+    );
 
-  return [settings, setSettings];
+    const setSettings = useCallback<LocalSettingsSetter>(
+        (key, value) => {
+            updateThreadSettings(threadId, key, value);
+        },
+        [threadId],
+    );
+
+    return [settings, setSettings];
 }

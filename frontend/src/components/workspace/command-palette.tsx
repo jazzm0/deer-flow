@@ -30,12 +30,17 @@ import { useGlobalShortcuts } from "@/hooks/use-global-shortcuts";
 import { SettingsDialog } from "./settings";
 
 export function CommandPalette() {
+  const [mounted, setMounted] = useState(false);
   const { t } = useI18n();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [isMac, setIsMac] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleNewChat = useCallback(() => {
     router.push("/workspace/chats/new");
